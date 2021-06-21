@@ -16,6 +16,21 @@ use std;
 
 mod manager {
 
+    pub fn check(location: &str) {
+        let data = std::fs::read_to_string(location).expect("Unable to read file");
+        let key = orion::auth::SecretKey::default();
+
+        let msg = "test".as_bytes();
+        let expected_tag = orion::auth::authenticate(&key, msg).unwrap();
+
+        assert!(orion::auth::authenticate_verify(&expected_tag, &key, &msg).is_ok());
+    }
+
+    pub fn init(master_key: &str, location: &str) {
+        std::fs::File::create(location).expect("Failed to create init file!");
+        std::fs::write(location, master_key);
+    }
+
     pub fn file_check(path: &str) -> bool {
         std::fs::metadata(path).is_ok()
     }
@@ -64,19 +79,23 @@ pub fn perform(task: &str) {
 
             println!("Enter the masterkey for passman");
             let mut master_key = String::new();
-            
+
             std::io::stdin()
                 .read_line(&mut master_key)
                 .unwrap()
                 .to_string();
 
             let ans = manager::get_secret(&mut master_key);
+            let mut encrypted_master_key = String::new();
             match ans {
                 Ok(i) => {
                     for &val in &i {
-                        print!("{} ", val as char)
+                        encrypted_master_key.push(val as char);
                     }
+                    manager::init(&encrypted_master_key, &home);
+                    manager::check(&home);
                 }
+
                 _ => panic!("Error encrypting the masterkey!"),
             };
             std::process::exit(0);
