@@ -27,11 +27,9 @@ mod manager {
         str
     }
 
-    pub fn new() -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
-        let mut line = String::new();
-        let b1 = std::io::stdin().read_line(&mut line).unwrap();
+    pub fn get_secret(pass: &mut str) -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
         let secret_key = orion::aead::SecretKey::default();
-        let ciphertext = orion::aead::seal(&secret_key, line.as_bytes());
+        let ciphertext = orion::aead::seal(&secret_key, pass.as_bytes());
         ciphertext
     }
 
@@ -55,19 +53,28 @@ pub fn perform(task: &str) {
         Some(path) => path.display().to_string(),
         None => panic!("No home folder found!"),
     };
-
     home.push_str("/.passman");
 
     match task {
+
         "new" => {
             let present = manager::file_check(&home);
             if present {
                 panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
             }
-            let ans = manager::new();
+
+            println!("Enter the masterkey for passman");
+            let mut master_key = String::new();
+            let mut b1 = std::io::stdin().read_line(&mut master_key).unwrap().to_string();
+
+            let ans = manager::get_secret(&mut b1);
             match ans {
-                Ok(i) => print!("{:?}", i),
-                _ => panic!("ERROR"),
+                Ok(i) => {
+                    for &val in &i {
+                        print!("{} ", val as char)
+                    }
+                }
+                _ => panic!("Error encrypting the masterkey!"),
             };
             std::process::exit(0);
         }
