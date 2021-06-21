@@ -56,7 +56,6 @@ pub fn perform(task: &str) {
     home.push_str("/.passman");
 
     match task {
-
         "new" => {
             let present = manager::file_check(&home);
             if present {
@@ -65,9 +64,13 @@ pub fn perform(task: &str) {
 
             println!("Enter the masterkey for passman");
             let mut master_key = String::new();
-            let mut b1 = std::io::stdin().read_line(&mut master_key).unwrap().to_string();
+            
+            std::io::stdin()
+                .read_line(&mut master_key)
+                .unwrap()
+                .to_string();
 
-            let ans = manager::get_secret(&mut b1);
+            let ans = manager::get_secret(&mut master_key);
             match ans {
                 Ok(i) => {
                     for &val in &i {
