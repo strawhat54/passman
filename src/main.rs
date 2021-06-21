@@ -1,3 +1,5 @@
+use passman::perform;
+
 fn main() {
-    println!("Hello, world!");
+    perform("Nothing");
 }
