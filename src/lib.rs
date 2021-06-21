@@ -1,4 +1,10 @@
-#![allow(unused_imports, unused_variables, dead_code, unused_mut)]
+#![allow(
+    unused_imports,
+    unused_variables,
+    dead_code,
+    unused_mut,
+    unused_must_use
+)]
 
 use clipboard;
 use dirs;
@@ -21,7 +27,13 @@ mod manager {
         str
     }
 
-    pub fn new() {}
+    pub fn new() -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
+        let mut line = String::new();
+        let b1 = std::io::stdin().read_line(&mut line).unwrap();
+        let secret_key = orion::aead::SecretKey::default();
+        let ciphertext = orion::aead::seal(&secret_key, line.as_bytes());
+        ciphertext
+    }
 
     pub fn add(name: &str, pass: &str) {}
 
@@ -43,7 +55,7 @@ pub fn perform(task: &str) {
         Some(path) => path.display().to_string(),
         None => panic!("No home folder found!"),
     };
-    
+
     home.push_str("/.passman");
 
     match task {
@@ -52,7 +64,12 @@ pub fn perform(task: &str) {
             if present {
                 panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
             }
-            manager::new();
+            let ans = manager::new();
+            match ans {
+                Ok(i) => print!("{:?}", i),
+                _ => panic!("ERROR"),
+            };
+            std::process::exit(0);
         }
 
         _ => {
