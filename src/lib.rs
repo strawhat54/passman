@@ -16,35 +16,54 @@ use std;
 
 mod manager {
 
-    pub fn check(location: &str) {
-        let data = std::fs::read_to_string(location).expect("Unable to read file");
+    pub fn authenticate(pass: &str, key_location: &str) {
+        let data = std::fs::read_to_string(key_location).expect("Unable to read file");
         let key = orion::auth::SecretKey::default();
-
-        let msg = "test".as_bytes();
-        let expected_tag = orion::auth::authenticate(&key, msg).unwrap();
-
-        assert!(orion::auth::authenticate_verify(&expected_tag, &key, &msg).is_ok());
+        let pass = pass.as_bytes();
+        let expected_tag = orion::auth::authenticate(&key, pass).unwrap();
+        if orion::auth::authenticate_verify(&expected_tag, &key, &pass).is_ok() {
+            println!("AUTHENTICATION SUCESSFULL !");
+        } else {
+            println!("WRONG PASSWORD");
+            std::process::exit(0);
+        }
     }
 
-    pub fn init(master_key: &str, location: &str) {
+    fn store(master_key: &str, location: &str) {
         std::fs::File::create(location).expect("Failed to create init file!");
         std::fs::write(location, master_key);
+    }
+
+    pub fn new(secret_location: &str) {
+        println!("Enter the masterkey for passman");
+        let mut master_key = String::new();
+
+        std::io::stdin()
+            .read_line(&mut master_key)
+            .unwrap()
+            .to_string();
+
+        let ans = encrypt(&mut master_key);
+        let mut encrypted_master_key = String::new();
+        for &val in &ans {
+            encrypted_master_key.push(val as char);
+        }
+
+        store(&encrypted_master_key, &secret_location)
     }
 
     pub fn file_check(path: &str) -> bool {
         std::fs::metadata(path).is_ok()
     }
 
-    pub fn authenticate(pass: &str) {}
-
     pub fn random() -> String {
         let str: String = (0..12).map(|_| rand::random::<u8>() as char).collect();
         str
     }
 
-    pub fn get_secret(pass: &mut str) -> Result<Vec<u8>, orion::errors::UnknownCryptoError> {
+    fn encrypt(pass: &mut str) -> Vec<u8> {
         let secret_key = orion::aead::SecretKey::default();
-        let ciphertext = orion::aead::seal(&secret_key, pass.as_bytes());
+        let ciphertext = orion::aead::seal(&secret_key, pass.as_bytes()).unwrap();
         ciphertext
     }
 
@@ -64,11 +83,9 @@ mod manager {
 }
 
 pub fn perform(task: &str) {
-    let mut home = match dirs::home_dir() {
-        Some(path) => path.display().to_string(),
-        None => panic!("No home folder found!"),
-    };
-    home.push_str("/.passman");
+    let home: String = dirs::home_dir().unwrap().display().to_string();
+    let config: String = format! {"{}{}", home,"/.passman"};
+    let secret: String = format! {"{}{}", home,"/.passman_key"};
 
     match task {
         "new" => {
@@ -77,28 +94,7 @@ pub fn perform(task: &str) {
                 panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
             }
 
-            println!("Enter the masterkey for passman");
-            let mut master_key = String::new();
-
-            std::io::stdin()
-                .read_line(&mut master_key)
-                .unwrap()
-                .to_string();
-
-            let ans = manager::get_secret(&mut master_key);
-            let mut encrypted_master_key = String::new();
-            match ans {
-                Ok(i) => {
-                    for &val in &i {
-                        encrypted_master_key.push(val as char);
-                    }
-                    manager::init(&encrypted_master_key, &home);
-                    manager::check(&home);
-                }
-
-                _ => panic!("Error encrypting the masterkey!"),
-            };
-            std::process::exit(0);
+            manager::new(&secret)
         }
 
         _ => {
