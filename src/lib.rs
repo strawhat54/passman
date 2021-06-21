@@ -43,13 +43,14 @@ pub fn perform(task: &str) {
         Some(path) => path.display().to_string(),
         None => panic!("No home folder found!"),
     };
+    
     home.push_str("/.passman");
 
     match task {
         "new" => {
             let present = manager::file_check(&home);
             if present {
-                panic!("Looks like you already hav initialized passman config. Try other options or destroy the current config with `passman destroy`");
+                panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
             }
             manager::new();
         }
