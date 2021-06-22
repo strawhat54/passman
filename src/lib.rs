@@ -8,10 +8,9 @@
 
 use clipboard;
 use dirs;
-use orion::{aead, auth};
+use orion;
 use rand;
 use rgb::RGB8;
-use serde::{Deserialize, Serialize};
 use std;
 
 mod manager {
@@ -43,11 +42,7 @@ mod manager {
             .unwrap()
             .to_string();
 
-        let ans = encrypt(&mut master_key);
-        let mut encrypted_master_key = String::new();
-        for &val in &ans {
-            encrypted_master_key.push(val as char);
-        }
+        let encrypted_master_key = encrypt(&mut master_key);
 
         store(&encrypted_master_key, &secret_location)
     }
@@ -61,10 +56,14 @@ mod manager {
         str
     }
 
-    fn encrypt(pass: &mut str) -> Vec<u8> {
+    fn encrypt(pass: &mut str) -> String {
         let secret_key = orion::aead::SecretKey::default();
-        let ciphertext = orion::aead::seal(&secret_key, pass.as_bytes()).unwrap();
-        ciphertext
+        let cipher_text = orion::aead::seal(&secret_key, pass.as_bytes()).unwrap();
+        let mut cipher_string = String::new();
+        for &val in &cipher_text {
+            cipher_string.push(val as char);
+        }
+        cipher_string
     }
 
     pub fn add(name: &str, pass: &str) {}
