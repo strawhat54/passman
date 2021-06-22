@@ -99,15 +99,21 @@ pub fn perform(task: &str) {
         "new" => {
             let present = manager::file_check(&secret_loc);
             if present {
-                manager::remove(&config_loc, &secret_loc);
-                // panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
+                panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
             }
             manager::new(&config_loc, &secret_loc);
             manager::authenticate("test", &secret_loc);
         }
-
         _ => {
-            print!("INVALID!");
+            let present = manager::file_check(&secret_loc);
+            if present == false {
+                panic!("Looks like you haven't initialized passman config. You can do so with `passman new`");
+            }
+
+            match task {
+                "destroy" => manager::remove(&config_loc, &secret_loc),
+                _ => unimplemented!(),
+            };
         }
     }
 }
