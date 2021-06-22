@@ -67,7 +67,13 @@ mod manager {
         cipher_string
     }
 
-    pub fn add(name: &str, pass: &str) {}
+   pub fn add(name: &str, pass: &mut str) -> std::io::Result<()> {
+        let mut pwd = encrypt(&mut pass);
+        let filename = site_name + ".txt";
+        let mut file = std::fs::File::create(filename)?;
+        std::fs::write(filename, pwd)?;
+        Ok(())
+    }
 
     pub fn update(name: &str, pass: &str) {}
 
