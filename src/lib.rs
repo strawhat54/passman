@@ -9,7 +9,7 @@
 use clipboard;
 use dirs;
 use orion;
-use rand;
+use rand::{self, Rng};
 use rgb::RGB8;
 use std;
 
@@ -29,11 +29,11 @@ mod manager {
     }
 
     fn store(master_key: &str, location: &str) {
-        std::fs::File::create(location).expect("Failed to create init file!");
-        std::fs::write(location, master_key);
+        std::fs::File::create(location).expect("Failed to create master_key file!"); // .passman_key
+        std::fs::write(location, master_key); // encrypted data write
     }
 
-    pub fn new(secret_location: &str) {
+    pub fn new(config_location: &str, secret_location: &str) {
         println!("Enter the masterkey for passman");
         let mut master_key = String::new();
 
@@ -43,8 +43,8 @@ mod manager {
             .to_string();
 
         let encrypted_master_key = encrypt(&mut master_key);
-
-        store(&encrypted_master_key, &secret_location)
+        store(&encrypted_master_key, &secret_location);
+        std::fs::create_dir(config_location).unwrap();
     }
 
     pub fn file_check(path: &str) -> bool {
@@ -52,8 +52,9 @@ mod manager {
     }
 
     pub fn random() -> String {
-        let str: String = (0..12).map(|_| rand::random::<u8>() as char).collect();
-        str
+        (0..15)
+            .map(|_| (0x20u8 + (rand::random::<f32>() * 96.0) as u8) as char) //idk reddit se mila
+            .collect()
     }
 
     fn encrypt(pass: &mut str) -> String {
@@ -83,17 +84,17 @@ mod manager {
 
 pub fn perform(task: &str) {
     let home: String = dirs::home_dir().unwrap().display().to_string();
-    let config: String = format! {"{}{}", home,"/.passman"};
-    let secret: String = format! {"{}{}", home,"/.passman_key"};
+    let config_loc: String = format! {"{}{}", home,"/.passman"};
+    let secret_loc: String = format! {"{}{}", home,"/.passman_key"};
 
     match task {
         "new" => {
-            let present = manager::file_check(&home);
+            let present = manager::file_check(&secret_loc);
             if present {
                 panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
             }
-
-            manager::new(&secret)
+            manager::new(&config_loc, &secret_loc);
+            manager::authenticate("test", &secret_loc);
         }
 
         _ => {
