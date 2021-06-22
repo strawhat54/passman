@@ -57,7 +57,7 @@ mod manager {
             .collect()
     }
 
-    fn encrypt(pass: &mut str) -> String {
+    fn encrypt(pass: &str) -> String {
         let secret_key = orion::aead::SecretKey::default();
         let cipher_text = orion::aead::seal(&secret_key, pass.as_bytes()).unwrap();
         let mut cipher_string = String::new();
@@ -67,9 +67,8 @@ mod manager {
         cipher_string
     }
 
-   pub fn add(name: &str, pass: &mut str) -> std::io::Result<()> {
-        let mut pwd = encrypt(&mut pass);
-        let filename = site_name + ".txt";
+   pub fn add(filename: &str, pass: &str) -> std::io::Result<()> {
+        let mut pwd = encrypt(pass);
         let mut file = std::fs::File::create(filename)?;
         std::fs::write(filename, pwd)?;
         Ok(())
