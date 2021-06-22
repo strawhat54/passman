@@ -67,7 +67,7 @@ mod manager {
         cipher_string
     }
 
-   pub fn add(filename: &str, pass: &str) -> std::io::Result<()> {
+    pub fn add(filename: &str, pass: &str) -> std::io::Result<()> {
         let mut pwd = encrypt(pass);
         let mut file = std::fs::File::create(filename)?;
         std::fs::write(filename, pwd)?;
@@ -76,9 +76,9 @@ mod manager {
 
     pub fn update(name: &str, pass: &str) {}
 
-    pub fn remove(filename: &str) -> std::io::Result<()>  {
-        std::fs::remove_file(filename)?;
-        Ok(())
+    pub fn remove(config_dir: &str, secret_key: &str) {
+        std::fs::remove_file(secret_key);
+        std::fs::remove_dir_all(config_dir);
     }
 
     pub fn get(name: &str) {}
@@ -99,7 +99,8 @@ pub fn perform(task: &str) {
         "new" => {
             let present = manager::file_check(&secret_loc);
             if present {
-                panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
+                manager::remove(&config_loc, &secret_loc);
+                // panic!("Looks like you already have initialized passman config. Try other options or destroy the current config with `passman destroy`");
             }
             manager::new(&config_loc, &secret_loc);
             manager::authenticate("test", &secret_loc);
