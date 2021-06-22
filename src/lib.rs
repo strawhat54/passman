@@ -76,7 +76,10 @@ mod manager {
 
     pub fn update(name: &str, pass: &str) {}
 
-    pub fn remove(name: &str) {}
+    pub fn remove(filename: &str) -> std::io::Result<()>  {
+        std::fs::remove_file(filename)?;
+        Ok(())
+    }
 
     pub fn get(name: &str) {}
 
