@@ -32,8 +32,10 @@ fn store(master_key: &str, location: &str) {
 }
 
 pub fn new(config_location: &str, secret_location: &str) {
-    println!("Enter the masterkey for passman");
+    
+    print!("Enter the masterkey for passman: ");
     let mut master_key = String::new();
+    println!("");
 
     std::io::stdin()
         .read_line(&mut master_key)
@@ -45,7 +47,7 @@ pub fn new(config_location: &str, secret_location: &str) {
     fs::create_dir(config_location).unwrap();
 }
 
-pub fn file_check(path: &str) -> bool {
+pub fn init_check(path: &str) -> bool {
     fs::metadata(path).is_ok()
 }
 
