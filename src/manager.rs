@@ -11,7 +11,25 @@ use dirs;
 use orion::{aead, auth};
 use rand;
 use rgb::RGB8;
+use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
+use std::io::{self, Read};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Item {
+    name: String,
+    desc: String,
+    salt: Vec<u8>,
+    // created: cration time
+    // date: last update time
+}
+
+pub fn ask(query: &str) -> String {
+    print!("{}: ", query);
+    let mut answer = String::new();
+    io::stdin().read_to_string(&mut answer);
+    answer
+}
 
 pub fn authenticate(pass: &str, key_location: &str) {
     let data = fs::read_to_string(key_location).expect("Unable to read file");
@@ -31,20 +49,15 @@ fn store(master_key: &str, location: &str) {
     fs::write(location, master_key); // encrypted data write
 }
 
-pub fn new(config_location: &str, secret_location: &str) {
-    
-    print!("Enter the masterkey for passman: ");
-    let mut master_key = String::new();
-    println!("");
+pub fn new() -> Vec<u8> {
+    print!("OK (new)");
+    let master_key = ask("Please enter master Key");
+    encrypt(&master_key)
+}
 
-    std::io::stdin()
-        .read_line(&mut master_key)
-        .unwrap()
-        .to_string();
-
-    let encrypted_master_key = encrypt(&mut master_key);
-    store(&encrypted_master_key, &secret_location);
-    fs::create_dir(config_location).unwrap();
+pub fn encrypt(pass: &str) -> Vec<u8> {
+    let secret_key = aead::SecretKey::default();
+    aead::seal(&secret_key, pass.as_bytes()).unwrap_or(vec![0])
 }
 
 pub fn init_check(path: &str) -> bool {
@@ -55,16 +68,6 @@ pub fn random() -> String {
     (0..15)
         .map(|_| (0x20u8 + (rand::random::<f32>() * 96.0) as u8) as char) //idk reddit se mila
         .collect()
-}
-
-fn encrypt(pass: &str) -> String {
-    let secret_key = aead::SecretKey::default();
-    let cipher_text = aead::seal(&secret_key, pass.as_bytes()).unwrap();
-    let mut cipher_string = String::new();
-    for &val in &cipher_text {
-        cipher_string.push(val as char);
-    }
-    cipher_string
 }
 
 pub fn add(filename: &str, pass: &str) -> std::io::Result<()> {
