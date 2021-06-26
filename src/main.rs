@@ -14,10 +14,35 @@ use manager::Item;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
-use std::{env, fs, io::Write};
-
-type Table = HashMap<Item, bool>;
+use std::{env, fs, io::Read, io::Write};
+type Table = HashMap<String, Lol>;
 static HELP: &str = "HELP MESSAGE";
+
+
+
+// TEST: READ/WRITE HASHMAPS (SERDE_JSON)
+#[derive(Serialize, Deserialize, Debug)]
+struct Lol {
+    name: String,
+}
+
+fn jj() {
+    let home = home_dir().expect("Home folder not found!");
+    let mut hmap = HashMap::new();
+    let test = home.join(".test_pass.json");
+    let x = Lol {
+        name: "pass".to_string(),
+    };
+    hmap.insert("pass".to_string(), x);
+    let file = fs::File::create(&test).unwrap();
+    let json = serde_json::to_writer(file, &hmap);
+
+    let f = std::fs::File::open(&test).unwrap();
+    let z: HashMap<String, Lol> = serde_json::from_reader(f).unwrap();
+
+    println!("{:?}", z);
+}
+// --------------END-----------------
 
 fn perform(query: &str) {
     let home = home_dir().expect("Home folder not found!");
@@ -82,5 +107,6 @@ fn perform(query: &str) {
 fn main() {
     let arg: Vec<String> = env::args().skip(1).collect();
 
-    perform(&arg[0]);
+    // perform(&arg[0]);
+    jj();
 }

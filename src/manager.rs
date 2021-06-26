@@ -18,9 +18,9 @@ use std::io::{self, Read};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Item {
-    name: String,
-    desc: String,
-    salt: Vec<u8>,
+    pub name: String,
+    pub desc: String,
+    pub salt: Vec<u8>,
     // created: cration time
     // date: last update time
 }
