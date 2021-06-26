@@ -8,7 +8,6 @@
 
 mod manager;
 
-use bincode;
 use dirs::home_dir;
 use manager::Item;
 use serde::{Deserialize, Serialize};
@@ -18,14 +17,13 @@ use std::{env, fs, io::Read, io::Write};
 type Table = HashMap<String, Lol>;
 static HELP: &str = "HELP MESSAGE";
 
-
-
 // TEST: READ/WRITE HASHMAPS (SERDE_JSON)
 #[derive(Serialize, Deserialize, Debug)]
 struct Lol {
     name: String,
 }
 
+#[test]
 fn test_func() {
     let home = home_dir().expect("Home folder not found!");
     let mut hmap = HashMap::new();
@@ -56,15 +54,14 @@ fn perform(query: &str) {
             if init == true {
                 println!("Looks like yout already have initialized passman. You can try other commands or run `passman destroy` to remove the current passwors and start from scratch");
                 std::process::exit(0);
-            } else {
-                let val = manager::new();
-                let json = serde_json::to_string(&val).unwrap();
-                fs::write(&secret, json);
-                let packed = fs::read_to_string(&secret).unwrap();
-                let v: Vec<u8> = serde_json::from_str(&packed).unwrap();
-
-                println!("{}", v == val);
             }
+            let val = manager::new();
+            let json = serde_json::to_string(&val).unwrap();
+            fs::write(&secret, json);
+            let packed = fs::read_to_string(&secret).unwrap();
+            let v: Vec<u8> = serde_json::from_str(&packed).unwrap();
+
+            println!("{}", v == val);
         }
 
         _ => {
@@ -108,5 +105,4 @@ fn main() {
     let arg: Vec<String> = env::args().skip(1).collect();
 
     // perform(&arg[0]);
-    test_func();
 }
