@@ -26,7 +26,7 @@ struct Lol {
     name: String,
 }
 
-fn jj() {
+fn test_func() {
     let home = home_dir().expect("Home folder not found!");
     let mut hmap = HashMap::new();
     let test = home.join(".test_pass.json");
@@ -108,5 +108,5 @@ fn main() {
     let arg: Vec<String> = env::args().skip(1).collect();
 
     // perform(&arg[0]);
-    jj();
+    test_func();
 }
