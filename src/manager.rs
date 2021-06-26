@@ -13,6 +13,7 @@ use rand;
 use rgb::RGB8;
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
+use std::io::prelude::*;
 use std::io::{self, Read};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -26,8 +27,9 @@ pub struct Item {
 
 pub fn ask(query: &str) -> String {
     print!("{}: ", query);
+    io::stdout().flush();
     let mut answer = String::new();
-    io::stdin().read_to_string(&mut answer);
+    io::stdin().read_line(&mut answer);
     answer
 }
 
@@ -50,7 +52,6 @@ fn store(master_key: &str, location: &str) {
 }
 
 pub fn new() -> Vec<u8> {
-    print!("OK (new)");
     let master_key = ask("Please enter master Key");
     encrypt(&master_key)
 }
