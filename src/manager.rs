@@ -57,15 +57,7 @@ pub fn new() -> String {
 pub fn encrypt(pass: &str) -> String {
     let mut hasher = Hasher::default();
     hasher.opt_out_of_secret_key(true);
-    let hash = hasher
-        .with_password(pass)
-        .hash()
-        .unwrap();
-    hash
-}
-
-pub fn init_check(path: &str) -> bool {
-    fs::metadata(path).is_ok()
+    hasher.with_password(pass).hash().unwrap()
 }
 
 pub fn random() -> String {
@@ -83,15 +75,8 @@ pub fn add(filename: &str, pass: &str) -> std::io::Result<()> {
 
 pub fn update(name: &str, pass: &str) {}
 
-pub fn remove(config_dir: &str, secret_key: &str) {
-    fs::remove_file(secret_key);
-    fs::remove_dir_all(config_dir);
-}
-
 pub fn get(name: &str) {}
 
 pub fn list() {}
-
-pub fn get_csv() {}
 
 pub fn destroy() {}

@@ -70,11 +70,13 @@ fn perform(query: &str) {
                 print!("AUTH FAILED");
                 std::process::exit(0);
             }
-            print!("AUTH PASSED!");
+            println!("AUTH PASSED!");
 
             match query {
                 "destroy" => {
-                    unimplemented!();
+                    fs::remove_file(&secret);
+                    fs::remove_file(&config);
+                    println!("Succesfully removed the config and password files.");
                 }
 
                 "add" => {
