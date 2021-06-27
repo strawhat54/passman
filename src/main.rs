@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use std::{env, fs, io::Read, io::Write};
 type Table = HashMap<String, Lol>;
 static HELP: &str = "HELP MESSAGE";
+use orion::auth::SecretKey;
 
 // TEST: READ/WRITE HASHMAPS (SERDE_JSON)
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,7 +47,7 @@ fn perform(query: &str) {
     let home = home_dir().expect("Home folder not found!");
 
     let config = home.join(".passman.json");
-    let secret = home.join(".passman_key.json");
+    let secret = home.join(".passman_key");
 
     let init = secret.is_file();
     match query {
@@ -55,21 +56,21 @@ fn perform(query: &str) {
                 println!("Looks like yout already have initialized passman. You can try other commands or run `passman destroy` to remove the current passwors and start from scratch");
                 std::process::exit(0);
             }
-            let val = manager::new();
-            let json = serde_json::to_string(&val).unwrap();
-            fs::write(&secret, json);
-            let packed = fs::read_to_string(&secret).unwrap();
-            let v: Vec<u8> = serde_json::from_str(&packed).unwrap();
-
-            println!("{}", v == val);
+            let master_key = manager::new();
+            fs::File::create(&secret).expect("Unable to create file.");
+            fs::write(&secret, master_key);
         }
 
         _ => {
             if init == false {
                 panic!("You haven't made a init file yet. You can do that with ` passman init `");
             }
-
-            // AUTHENTICATE
+            let pass = manager::ask("Enter password");
+            if manager::authenticate(&pass, &secret) == false {
+                print!("AUTH FAILED");
+                std::process::exit(0);
+            }
+            print!("AUTH PASSED!");
 
             match query {
                 "destroy" => {
@@ -92,7 +93,7 @@ fn perform(query: &str) {
                     unimplemented!();
                 }
                 _ => {
-                    print!("{}", HELP);
+                    println!("{}", "YOOHOOOOOO!!!");
                 }
             };
         }
@@ -104,5 +105,5 @@ fn perform(query: &str) {
 fn main() {
     let arg: Vec<String> = env::args().skip(1).collect();
 
-    // perform(&arg[0]);
+    perform(&arg[0]);
 }
