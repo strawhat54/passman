@@ -1,15 +1,8 @@
-#![allow(
-    unused_imports,
-    unused_variables,
-    dead_code,
-    unused_mut,
-    unused_must_use
-)]
+#![allow(unused_imports)]
 
 use argonautica::{Hasher, Verifier};
 use clipboard;
 use dirs;
-use orion::{aead, auth};
 use rand;
 use rgb::RGB8;
 use serde::{Deserialize, Serialize};
@@ -44,11 +37,6 @@ pub fn authenticate(pass: &str, key_location: &std::path::PathBuf) -> bool {
         .unwrap()
 }
 
-fn store(master_key: &str, location: &str) {
-    File::create(location).expect("Failed to create master_key file!"); // .passman_key
-    fs::write(location, master_key); // encrypted data write
-}
-
 pub fn new() -> String {
     let master_key = ask("Please enter master Key");
     encrypt(&master_key)
@@ -60,23 +48,8 @@ pub fn encrypt(pass: &str) -> String {
     hasher.with_password(pass).hash().unwrap()
 }
 
-pub fn random() -> String {
+pub fn _random() -> String {
     (0..15)
         .map(|_| (0x20u8 + (rand::random::<f32>() * 96.0) as u8) as char) //idk reddit se mila
         .collect()
 }
-
-pub fn add(filename: &str, pass: &str) -> std::io::Result<()> {
-    let mut pwd = encrypt(pass);
-    let mut file = File::create(filename)?;
-    fs::write(filename, pwd)?;
-    Ok(())
-}
-
-pub fn update(name: &str, pass: &str) {}
-
-pub fn get(name: &str) {}
-
-pub fn list() {}
-
-pub fn destroy() {}

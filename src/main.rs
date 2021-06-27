@@ -1,10 +1,4 @@
-#![allow(
-    unused_imports,
-    unused_variables,
-    dead_code,
-    unused_mut,
-    unused_must_use
-)]
+#![allow(unused_imports, unused_must_use)]
 
 mod manager;
 
@@ -14,34 +8,6 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use std::{env, fs, io::Read, io::Write};
-type Table = HashMap<String, Lol>;
-static HELP: &str = "HELP MESSAGE";
-use orion::auth::SecretKey;
-
-// TEST: READ/WRITE HASHMAPS (SERDE_JSON)
-#[derive(Serialize, Deserialize, Debug)]
-struct Lol {
-    name: String,
-}
-
-#[test]
-fn test_func() {
-    let home = home_dir().expect("Home folder not found!");
-    let mut hmap = HashMap::new();
-    let test = home.join(".test_pass.json");
-    let x = Lol {
-        name: "pass".to_string(),
-    };
-    hmap.insert("pass".to_string(), x);
-    let file = fs::File::create(&test).unwrap();
-    let json = serde_json::to_writer(file, &hmap);
-
-    let f = std::fs::File::open(&test).unwrap();
-    let z: HashMap<String, Lol> = serde_json::from_reader(f).unwrap();
-
-    println!("{:?}", z);
-}
-// --------------END-----------------
 
 fn perform(query: &str) {
     let home = home_dir().expect("Home folder not found!");
@@ -67,7 +33,7 @@ fn perform(query: &str) {
             }
             let pass = manager::ask("Enter password");
             if manager::authenticate(&pass, &secret) == false {
-                print!("AUTH FAILED");
+                println!("AUTH FAILED");
                 std::process::exit(0);
             }
             println!("AUTH PASSED!");
@@ -77,6 +43,7 @@ fn perform(query: &str) {
                     fs::remove_file(&secret);
                     fs::remove_file(&config);
                     println!("Succesfully removed the config and password files.");
+                    std::process::exit(0);
                 }
 
                 "add" => {
@@ -100,8 +67,6 @@ fn perform(query: &str) {
             };
         }
     };
-
-    // Write to file (seperate file for each key:val in $HOME/.passman/json)
 }
 
 fn main() {
