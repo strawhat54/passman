@@ -6,6 +6,7 @@
     unused_must_use
 )]
 
+use argonautica::{Hasher, Verifier};
 use clipboard;
 use dirs;
 use orion::{aead, auth};
@@ -20,7 +21,7 @@ use std::io::{self, Read};
 pub struct Item {
     pub name: String,
     pub desc: String,
-    pub salt: Vec<u8>,
+    pub hash: String,
     // created: cration time
     // date: last update time
 }
@@ -33,17 +34,14 @@ pub fn ask(query: &str) -> String {
     answer
 }
 
-pub fn authenticate(pass: &str, key_location: &str) {
-    let data = fs::read_to_string(key_location).expect("Unable to read file");
-    let key = auth::SecretKey::default();
-    let pass = pass.as_bytes();
-    let expected_tag = auth::authenticate(&key, pass).unwrap();
-    if auth::authenticate_verify(&expected_tag, &key, &pass).is_ok() {
-        println!("AUTHENTICATION SUCESSFULL !");
-    } else {
-        println!("WRONG PASSWORD");
-        std::process::exit(0);
-    }
+pub fn authenticate(pass: &str, key_location: &std::path::PathBuf) -> bool {
+    let master_hash = fs::read_to_string(key_location).unwrap();
+    let mut verifier = Verifier::default();
+    verifier
+        .with_hash(&master_hash)
+        .with_password(pass)
+        .verify()
+        .unwrap()
 }
 
 fn store(master_key: &str, location: &str) {
@@ -51,14 +49,19 @@ fn store(master_key: &str, location: &str) {
     fs::write(location, master_key); // encrypted data write
 }
 
-pub fn new() -> Vec<u8> {
+pub fn new() -> String {
     let master_key = ask("Please enter master Key");
     encrypt(&master_key)
 }
 
-pub fn encrypt(pass: &str) -> Vec<u8> {
-    let secret_key = aead::SecretKey::default();
-    aead::seal(&secret_key, pass.as_bytes()).unwrap_or(vec![0])
+pub fn encrypt(pass: &str) -> String {
+    let mut hasher = Hasher::default();
+    hasher.opt_out_of_secret_key(true);
+    let hash = hasher
+        .with_password(pass)
+        .hash()
+        .unwrap();
+    hash
 }
 
 pub fn init_check(path: &str) -> bool {
