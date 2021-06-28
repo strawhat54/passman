@@ -1,4 +1,4 @@
-#![allow(unused_imports, unused_must_use)]
+#![allow(unused_imports, unused_must_use, unused_assignments)]
 
 mod manager;
 
@@ -9,11 +9,14 @@ use serde_json;
 use std::collections::HashMap;
 use std::{env, fs, io::Read, io::Write};
 
+type Table = HashMap<String, Item>;
+
 fn perform(query: &str) {
     let home = home_dir().expect("Home folder not found!");
 
     let config = home.join(".passman.json");
     let secret = home.join(".passman_key");
+    let mut database: Table;
 
     let init = secret.is_file();
     match query {
@@ -24,7 +27,9 @@ fn perform(query: &str) {
             }
             let master_key = manager::new();
             fs::File::create(&secret).expect("Unable to create file.");
+            fs::File::create(&config).expect("Unable to create file.");
             fs::write(&secret, master_key);
+            database = Table::new();
         }
 
         _ => {
@@ -38,6 +43,11 @@ fn perform(query: &str) {
             }
             println!("AUTH PASSED!");
 
+            database = serde_json::from_reader(
+                fs::File::open(&config).expect("Unable to open config file"),
+            )
+            .unwrap_or(Table::new());
+
             match query {
                 "destroy" => {
                     fs::remove_file(&secret);
@@ -47,7 +57,14 @@ fn perform(query: &str) {
                 }
 
                 "add" => {
-                    unimplemented!();
+                    let name = manager::ask("Name for the entry");
+                    let item = manager::create_new_item(&name);
+                    database.insert(name, item);
+                    println!("key entry suck cess");
+
+                    fs::File::open(&config).expect("Unable to open config file");
+                    let buffer = serde_json::to_string(&database).unwrap();
+                    fs::write(&config, &buffer);
                 }
                 "update" => {
                     unimplemented!();
