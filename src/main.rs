@@ -65,9 +65,14 @@ fn perform(query: &str) {
                     fs::File::open(&config).expect("Unable to open config file");
                     let buffer = serde_json::to_string(&database).unwrap();
                     fs::write(&config, &buffer);
+                    println!("Your entry was successfully added!");
                 }
                 "update" => {
-                    unimplemented!();
+                    let name = manager::ask("Name of the entry");
+                    let present = &database.get(&name).expect("No such entry!");
+                    let updated_entry = manager::update(present);
+                    database.insert(name, updated_entry);
+                    println!("Your entry was successfully updated!");
                 }
                 "list" => {
                     unimplemented!();
