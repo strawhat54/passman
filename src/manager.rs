@@ -53,6 +53,17 @@ pub fn create_new_item(name: &str) -> Item {
     }
 }
 
+pub fn update(item: &Item) -> Item {
+    let new_hash = encrypt(&ask("Please enter new password"));
+    let name = item.name.clone();
+    let desc = item.desc.clone();
+    Item {
+        name: name,
+        desc: desc,
+        hash: new_hash,
+    }
+}
+
 pub fn encrypt(pass: &str) -> String {
     let mut hasher = Hasher::default();
     hasher.opt_out_of_secret_key(true);
