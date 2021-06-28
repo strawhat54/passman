@@ -1,4 +1,4 @@
-#![allow(unused_imports)]
+#![allow(unused_imports, dead_code)]
 
 use argonautica::{Hasher, Verifier};
 use clipboard;
@@ -40,6 +40,17 @@ pub fn authenticate(pass: &str, key_location: &std::path::PathBuf) -> bool {
 pub fn new() -> String {
     let master_key = ask("Please enter master Key");
     encrypt(&master_key)
+}
+
+pub fn create_new_item(name: &str) -> Item {
+    let desc = ask("Desc");
+    let pass = ask("Password");
+    let hash = encrypt(&pass);
+    Item {
+        name: name.to_string(),
+        desc: desc,
+        hash: hash,
+    }
 }
 
 pub fn encrypt(pass: &str) -> String {
