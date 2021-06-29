@@ -24,7 +24,7 @@ pub fn ask(query: &str) -> String {
     io::stdout().flush();
     let mut answer = String::new();
     io::stdin().read_line(&mut answer);
-    answer
+    answer.trim().to_string()
 }
 
 pub fn authenticate(pass: &str, key_location: &std::path::PathBuf) -> bool {
