@@ -6,6 +6,7 @@ use dirs;
 use rand;
 use rgb::RGB8;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::io::{self, Read};
@@ -17,6 +18,12 @@ pub struct Item {
     pub hash: String,
     // created: cration time
     // date: last update time
+}
+
+impl std::fmt::Display for Item {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Name: {}\nDesc: {}", self.name, self.desc)
+    }
 }
 
 pub fn ask(query: &str) -> String {
@@ -67,6 +74,8 @@ pub fn update(item: &Item) -> Item {
 pub fn encrypt(pass: &str) -> String {
     let mut hasher = Hasher::default();
     hasher.opt_out_of_secret_key(true);
+    let test = hasher.with_password(pass).hash_raw().unwrap();
+    print!("encrypted: {:?}", test);
     hasher.with_password(pass).hash().unwrap()
 }
 
