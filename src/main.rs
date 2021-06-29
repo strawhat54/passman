@@ -11,6 +11,13 @@ use std::{env, fs, io::Read, io::Write};
 
 type Table = HashMap<String, Item>;
 
+fn updatedb(config: &std::path::Path, database: &Table) {
+    fs::File::open(&config).expect("Unable to open config file");
+    let buffer = serde_json::to_string(&database).unwrap();
+    fs::write(&config, &buffer);
+    println!("Your entry was successfully added!");
+}
+
 fn perform(query: &str) {
     let home = home_dir().expect("Home folder not found!");
 
@@ -22,7 +29,7 @@ fn perform(query: &str) {
     match query {
         "new" => {
             if init == true {
-                println!("Looks like yout already have initialized passman. You can try other commands or run `passman destroy` to remove the current passwors and start from scratch");
+                println!("Looks like yout already have initialized passman. You can try other commands or run passman destroy to remove the current passwors and start from scratch");
                 std::process::exit(0);
             }
             let master_key = manager::new();
@@ -34,7 +41,7 @@ fn perform(query: &str) {
 
         _ => {
             if init == false {
-                panic!("You haven't made a init file yet. You can do that with ` passman init `");
+                panic!("You haven't made a init file yet. You can do that with  passman init ");
             }
             let pass = manager::ask("Enter password");
             if manager::authenticate(&pass, &secret) == false {
@@ -53,7 +60,6 @@ fn perform(query: &str) {
                     fs::remove_file(&secret);
                     fs::remove_file(&config);
                     println!("Succesfully removed the config and password files.");
-                    std::process::exit(0);
                 }
 
                 "add" => {
@@ -61,28 +67,34 @@ fn perform(query: &str) {
                     let item = manager::create_new_item(&name);
                     database.insert(name, item);
                     println!("key entry suck cess");
-
-                    fs::File::open(&config).expect("Unable to open config file");
-                    let buffer = serde_json::to_string(&database).unwrap();
-                    fs::write(&config, &buffer);
-                    println!("Your entry was successfully added!");
+                    updatedb(&config, &database);
                 }
+
                 "update" => {
                     let name = manager::ask("Name of the entry");
                     let present = &database.get(&name).expect("No such entry!");
                     let updated_entry = manager::update(present);
                     database.insert(name, updated_entry);
-                    fs::File::open(&config).expect("Unable to open config file");
-                    let buffer = serde_json::to_string(&database).unwrap();
-                    fs::write(&config, &buffer);
-                    println!("Your entry was successfully updated!");
+                    updatedb(&config, &database);
                 }
                 "list" => {
-                    unimplemented!();
+                    println!("The list of stored keys are: ");
+                    for (key, _) in database {
+                        println!("- {}", key);
+                    }
                 }
+
                 "del" => {
-                    unimplemented!();
+                    let name = manager::ask("Name of the entry");
+                    let _ = database.get(&name).or_else(|| {
+                        println!("No such entry");
+                        std::process::exit(0);
+                    });
+                    database.remove(&name);
+                    println!("Succesfully removed all the data about entry {}", name);
+                    updatedb(&config, &database);
                 }
+
                 "info" => {
                     unimplemented!();
                 }
