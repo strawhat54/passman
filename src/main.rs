@@ -1,4 +1,4 @@
-#![allow(unused_imports, unused_must_use, unused_assignments)]
+#![allow(unused_imports, unused_must_use, unused_assignments, dead_code)]
 
 mod manager;
 
@@ -7,6 +7,7 @@ use manager::Item;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
+use std::marker::Sized;
 use std::{env, fs, io::Read, io::Write};
 
 type Table = HashMap<String, Item>;
@@ -17,6 +18,22 @@ fn updatedb(config: &std::path::Path, database: &Table) {
     fs::write(&config, &buffer);
     println!("Your entry was successfully added!");
 }
+
+static HELP: &str = r"
+USAGE: passman <option>
+
+Currently available options are:
+
+help      display this help message and exit
+new       initalize passman with a new master key
+destory   destroy the current passman config and hence delete all the data
+add       add a new entry to passman
+update    updates the password of a registered entry
+del       deletes a registered entry
+list      lists all the available keys
+info      displays information about the queried entry
+
+";
 
 fn perform(query: &str) {
     let home = home_dir().expect("Home folder not found!");
@@ -113,7 +130,8 @@ fn perform(query: &str) {
                     println!("{:#?}", item);
                 }
                 _ => {
-                    println!("{}", "YOOHOOOOOO!!!");
+                    println!("No such option");
+                    println!("{}", HELP);
                 }
             };
         }
@@ -122,6 +140,9 @@ fn perform(query: &str) {
 
 fn main() {
     let arg: Vec<String> = env::args().skip(1).collect();
-
-    perform(&arg[0]);
+    if (arg.len() == 0) || (arg[0].to_lowercase() == "help") {
+        println!("{}", HELP);
+        std::process::exit(0);
+    }
+    perform(&arg[0].to_lowercase());
 }
