@@ -32,7 +32,6 @@ update    updates the password of a registered entry
 del       deletes a registered entry
 list      lists all the available keys
 info      displays information about the queried entry
-
 ";
 
 fn perform(query: &str) {
@@ -127,7 +126,7 @@ fn perform(query: &str) {
                             std::process::exit(0);
                         })
                         .unwrap();
-                    println!("{:#?}", item);
+                    println!("{}", item);
                 }
                 _ => {
                     println!("No such option");
