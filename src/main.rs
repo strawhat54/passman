@@ -72,7 +72,13 @@ fn perform(query: &str) {
 
                 "update" => {
                     let name = manager::ask("Name of the entry");
-                    let present = &database.get(&name).expect("No such entry!");
+                    let present = database
+                        .get(&name)
+                        .or_else(|| {
+                            println!("No such entry");
+                            std::process::exit(0);
+                        })
+                        .unwrap();
                     let updated_entry = manager::update(present);
                     database.insert(name, updated_entry);
                     updatedb(&config, &database);
@@ -96,7 +102,15 @@ fn perform(query: &str) {
                 }
 
                 "info" => {
-                    unimplemented!();
+                    let name = manager::ask("Name of the entry");
+                    let item = database
+                        .get(&name)
+                        .or_else(|| {
+                            println!("No such entry");
+                            std::process::exit(0);
+                        })
+                        .unwrap();
+                    println!("{:#?}", item);
                 }
                 _ => {
                     println!("{}", "YOOHOOOOOO!!!");
