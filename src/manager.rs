@@ -1,5 +1,7 @@
 #![allow(unused_imports, dead_code)]
 
+use aes_gcm::aead::{Aead, NewAead};
+use aes_gcm::{Aes256Gcm, Key, Nonce}; // Or `Aes128Gcm`
 use argonautica::{Hasher, Verifier};
 use clipboard;
 use dirs;
@@ -25,6 +27,30 @@ impl std::fmt::Display for Item {
         write!(f, "Name: {}\nDesc: {}", self.name, self.desc)
     }
 }
+
+// ------------------------------------
+
+#[test]
+fn name() {
+
+    let key = Key::from_slice(b"an example very very secret key.");
+    let cipher = Aes256Gcm::new(key);
+
+    let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
+
+    let ciphertext = cipher
+        .encrypt(nonce, b"plaintext message".as_ref())
+        .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
+
+    let plaintext = cipher
+        .decrypt(nonce, ciphertext.as_ref())
+        .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
+
+    assert_eq!(&plaintext, b"plaintext message");
+}
+
+
+// ------------------------------------
 
 pub fn ask(query: &str) -> String {
     print!("{}: ", query);
