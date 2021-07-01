@@ -15,6 +15,7 @@ serde_json = "1.0.64"
 argonautica = "0.2.0"
 aead = "0.4.1"
 aes-gcm = "0.9.2"
+magic-crypt = "3.1.8"
 
 [profile.dev]
 opt-level = 3
