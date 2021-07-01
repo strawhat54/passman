@@ -1,25 +1,25 @@
 #![allow(unused_imports, unused_must_use, unused_assignments, dead_code)]
+mod manager;
 #[macro_use]
 extern crate magic_crypt;
-
-
-
-mod manager;
-
+#[macro_use]
+extern crate prettytable;
+use clipboard::{ClipboardContext, ClipboardProvider};
 use dirs::home_dir;
 use manager::Item;
-use serde::{Deserialize, Serialize};
+use prettytable::{Cell, Row, Table};
 use serde_json;
 use std::collections::HashMap;
-use std::marker::Sized;
-use std::{env, fs, io::Read, io::Write};
+use std::thread;
+use std::time::Duration;
+use std::{env, fs};
 
-type Table = HashMap<String, Item>;
+type DB = HashMap<String, Item>;
 
-fn updatedb(config: &std::path::Path, database: &Table) {
+fn updatedb(config: &std::path::Path, database: &DB) {
     fs::File::open(&config).expect("Unable to open config file");
     let buffer = serde_json::to_string(&database).unwrap();
-    fs::write(&config, &buffer);
+    fs::write(&config, &buffer).expect("something bad happend");
     println!("Your entry was successfully added!");
 }
 
@@ -30,6 +30,7 @@ Currently available options are:
 
 help      display this help message and exit
 new       initalize passman with a new master key
+get       to copy the password of the given query to clipboard for 30 seconds
 destory   destroy the current passman config and hence delete all the data
 add       add a new entry to passman
 update    updates the password of a registered entry
@@ -43,7 +44,7 @@ fn perform(query: &str) {
 
     let config = home.join(".passman.json");
     let secret = home.join(".passman_key");
-    let mut database: Table;
+    let mut database: DB;
 
     let init = secret.is_file();
     match query {
@@ -55,8 +56,7 @@ fn perform(query: &str) {
             let master_key = manager::new();
             fs::File::create(&secret).expect("Unable to create file.");
             fs::File::create(&config).expect("Unable to create file.");
-            fs::write(&secret, master_key);
-            database = Table::new();
+            fs::write(&secret, master_key).expect("cannot write to file");
         }
 
         _ => {
@@ -73,12 +73,32 @@ fn perform(query: &str) {
             database = serde_json::from_reader(
                 fs::File::open(&config).expect("Unable to open config file"),
             )
-            .unwrap_or(Table::new());
+            .unwrap_or(DB::new());
 
             match query {
+                "get" => {
+                    let name = manager::ask("Name for the entry");
+                    let item = database
+                        .get(&name)
+                        .or_else(|| {
+                            println!("No such entry");
+                            std::process::exit(0);
+                        })
+                        .unwrap();
+
+                    let decrypted_pass = manager::get(&master, &item.hash);
+                    // println!("Your pass for {} is {}", name, decrypted_pass);
+                    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+                    ctx.set_contents(decrypted_pass)
+                        .expect("Not able to copy to clipboard");
+                    println!("Password copied to clipbpoard for 30 seconds!");
+                    thread::sleep(Duration::from_secs(30));
+                    println!("Time's Up!");
+                }
+
                 "destroy" => {
-                    fs::remove_file(&secret);
-                    fs::remove_file(&config);
+                    fs::remove_file(&secret).expect("someone deleted the secret file already");
+                    fs::remove_file(&config).expect("someone deleted the config file already");
                     println!("Succesfully removed the config and password files.");
                 }
 
@@ -131,6 +151,15 @@ fn perform(query: &str) {
                         })
                         .unwrap();
                     println!("{}", item);
+                }
+
+                "show" => {
+                    let mut table = Table::new();
+                    table.add_row(row!["name", "password"]);
+                    for (name, item) in database {
+                        table.add_row(row![name, manager::get(&master, &item.hash)]);
+                    }
+                    table.printstd();
                 }
                 _ => {
                     println!("No such option");
