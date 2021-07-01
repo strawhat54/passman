@@ -1,10 +1,10 @@
 #![allow(unused_imports, dead_code)]
-
 use aes_gcm::aead::{Aead, NewAead};
 use aes_gcm::{Aes256Gcm, Key, Nonce}; // Or `Aes128Gcm`
 use argonautica::{Hasher, Verifier};
 use clipboard;
 use dirs;
+use magic_crypt::MagicCryptTrait;
 use rand;
 use rgb::RGB8;
 use serde::{Deserialize, Serialize};
@@ -30,25 +30,15 @@ impl std::fmt::Display for Item {
 
 // ------------------------------------
 
-#[test]
-fn name() {
-
-    let key = Key::from_slice(b"an example very very secret key.");
-    let cipher = Aes256Gcm::new(key);
-
-    let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
-
-    let ciphertext = cipher
-        .encrypt(nonce, b"plaintext message".as_ref())
-        .expect("encryption failure!"); // NOTE: handle this error to avoid panics!
-
-    let plaintext = cipher
-        .decrypt(nonce, ciphertext.as_ref())
-        .expect("decryption failure!"); // NOTE: handle this error to avoid panics!
-
-    assert_eq!(&plaintext, b"plaintext message");
+fn encrypt_item(master: &str, pass: &str) -> String {
+    let mc = new_magic_crypt!(master, 256);
+    mc.encrypt_str_to_base64(pass)
 }
 
+fn decrypt_item(master: &str, pass: &str) -> String {
+    let mc = new_magic_crypt!(master, 256);
+    mc.decrypt_base64_to_string(pass).unwrap()
+}
 
 // ------------------------------------
 
@@ -72,13 +62,13 @@ pub fn authenticate(pass: &str, key_location: &std::path::PathBuf) -> bool {
 
 pub fn new() -> String {
     let master_key = ask("Please enter master Key");
-    encrypt(&master_key)
+    encrypt_master(&master_key)
 }
 
-pub fn create_new_item(name: &str) -> Item {
+pub fn create_new_item(name: &str, master: &str) -> Item {
     let desc = ask("Desc");
     let pass = ask("Password");
-    let hash = encrypt(&pass);
+    let hash = encrypt_item(master, &pass);
     Item {
         name: name.to_string(),
         desc: desc,
@@ -86,8 +76,8 @@ pub fn create_new_item(name: &str) -> Item {
     }
 }
 
-pub fn update(item: &Item) -> Item {
-    let new_hash = encrypt(&ask("Please enter new password"));
+pub fn update(item: &Item, master: &str) -> Item {
+    let new_hash = encrypt_item(master, &ask("Please enter new password"));
     let name = item.name.clone();
     let desc = item.desc.clone();
     Item {
@@ -97,7 +87,7 @@ pub fn update(item: &Item) -> Item {
     }
 }
 
-pub fn encrypt(pass: &str) -> String {
+pub fn encrypt_master(pass: &str) -> String {
     let mut hasher = Hasher::default();
     hasher.opt_out_of_secret_key(true);
     let test = hasher.with_password(pass).hash_raw().unwrap();
