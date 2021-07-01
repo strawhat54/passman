@@ -1,9 +1,7 @@
-#![allow(unused_imports, dead_code)]
-use aes_gcm::aead::{Aead, NewAead};
-use aes_gcm::{Aes256Gcm, Key, Nonce}; // Or `Aes128Gcm`
+#![allow(unused_imports, unused_must_use, dead_code)]
+
 use argonautica::{Hasher, Verifier};
 use clipboard;
-use dirs;
 use magic_crypt::MagicCryptTrait;
 use rand;
 use rgb::RGB8;
@@ -93,6 +91,10 @@ pub fn encrypt_master(pass: &str) -> String {
     let test = hasher.with_password(pass).hash_raw().unwrap();
     print!("encrypted: {:?}", test);
     hasher.with_password(pass).hash().unwrap()
+}
+
+pub fn get(master: &str, hash: &str ) -> String {
+    decrypt_item(master, hash)
 }
 
 pub fn _random() -> String {
