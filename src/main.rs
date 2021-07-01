@@ -1,4 +1,8 @@
 #![allow(unused_imports, unused_must_use, unused_assignments, dead_code)]
+#[macro_use]
+extern crate magic_crypt;
+
+
 
 mod manager;
 
@@ -59,8 +63,8 @@ fn perform(query: &str) {
             if init == false {
                 panic!("You haven't made a init file yet. You can do that with  passman init ");
             }
-            let pass = manager::ask("Enter password");
-            if manager::authenticate(&pass, &secret) == false {
+            let master = manager::ask("Enter password");
+            if manager::authenticate(&master, &secret) == false {
                 println!("AUTH FAILED");
                 std::process::exit(0);
             }
@@ -80,7 +84,7 @@ fn perform(query: &str) {
 
                 "add" => {
                     let name = manager::ask("Name for the entry");
-                    let item = manager::create_new_item(&name);
+                    let item = manager::create_new_item(&name, &master);
                     database.insert(name, item);
                     println!("key entry suck cess");
                     updatedb(&config, &database);
@@ -95,7 +99,7 @@ fn perform(query: &str) {
                             std::process::exit(0);
                         })
                         .unwrap();
-                    let updated_entry = manager::update(present);
+                    let updated_entry = manager::update(present, &master);
                     database.insert(name, updated_entry);
                     updatedb(&config, &database);
                 }
