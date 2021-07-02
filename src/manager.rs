@@ -1,15 +1,14 @@
 #![allow(unused_imports, unused_must_use, dead_code)]
 
-use argonautica::{Hasher, Verifier};
+use super::auth::{decrypt_item, encrypt_item, encrypt_master};
+use ansi_term::Color::{Red, Yellow, Green};
 use clipboard;
-use magic_crypt::MagicCryptTrait;
+use dirs;
 use rand;
-use rgb::RGB8;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs::{self, File};
-use std::io::prelude::*;
-use std::io::{self, Read};
+use std::io::{self, prelude::*, Read};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Item {
@@ -26,36 +25,12 @@ impl std::fmt::Display for Item {
     }
 }
 
-// ------------------------------------
-
-fn encrypt_item(master: &str, pass: &str) -> String {
-    let mc = new_magic_crypt!(master, 256);
-    mc.encrypt_str_to_base64(pass)
-}
-
-fn decrypt_item(master: &str, pass: &str) -> String {
-    let mc = new_magic_crypt!(master, 256);
-    mc.decrypt_base64_to_string(pass).unwrap()
-}
-
-// ------------------------------------
-
 pub fn ask(query: &str) -> String {
-    print!("{}: ", query);
+    print!("{}: ", Yellow.paint(query));
     io::stdout().flush();
     let mut answer = String::new();
     io::stdin().read_line(&mut answer);
     answer.trim().to_string()
-}
-
-pub fn authenticate(pass: &str, key_location: &std::path::PathBuf) -> bool {
-    let master_hash = fs::read_to_string(key_location).unwrap();
-    let mut verifier = Verifier::default();
-    verifier
-        .with_hash(&master_hash)
-        .with_password(pass)
-        .verify()
-        .unwrap()
 }
 
 pub fn new() -> String {
@@ -85,20 +60,8 @@ pub fn update(item: &Item, master: &str) -> Item {
     }
 }
 
-pub fn encrypt_master(pass: &str) -> String {
-    let mut hasher = Hasher::default();
-    hasher.opt_out_of_secret_key(true);
-    let test = hasher.with_password(pass).hash_raw().unwrap();
-    print!("encrypted: {:?}", test);
-    hasher.with_password(pass).hash().unwrap()
-}
-
-pub fn get(master: &str, hash: &str ) -> String {
-    decrypt_item(master, hash)
-}
-
 pub fn _random() -> String {
     (0..15)
-        .map(|_| (0x20u8 + (rand::random::<f32>() * 96.0) as u8) as char) //idk reddit se mila
+        .map(|_| (0x20u8 + (rand::random::<f32>() * 96.0) as u8) as char)
         .collect()
 }
