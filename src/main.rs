@@ -1,9 +1,11 @@
 #![allow(unused_imports, unused_must_use, unused_assignments, dead_code)]
+mod auth;
 mod manager;
 #[macro_use]
 extern crate magic_crypt;
 #[macro_use]
 extern crate prettytable;
+use ansi_term::Color::{Green, Purple, Red, Yellow};
 use clipboard::{ClipboardContext, ClipboardProvider};
 use dirs::home_dir;
 use manager::Item;
@@ -27,6 +29,7 @@ static HELP: &str = r"
 USAGE: passman <option>
 
 Currently available options are:
+--------------------------------
 
 help      display this help message and exit
 new       initalize passman with a new master key
@@ -36,12 +39,12 @@ add       add a new entry to passman
 update    updates the password of a registered entry
 del       deletes a registered entry
 list      lists all the available keys
+show      displays a table consisting of entries and their passwords(for exporting)
 info      displays information about the queried entry
 ";
 
 fn perform(query: &str) {
     let home = home_dir().expect("Home folder not found!");
-
     let config = home.join(".passman.json");
     let secret = home.join(".passman_key");
     let mut database: DB;
@@ -50,28 +53,34 @@ fn perform(query: &str) {
     match query {
         "new" => {
             if init == true {
-                println!("Looks like yout already have initialized passman. You can try other commands or run passman destroy to remove the current passwors and start from scratch");
+                println!("{}",Red.paint("Looks like yout already have initialized passman. You can try other commands or run passman destroy to remove the current passwors and start from scratch"));
                 std::process::exit(0);
             }
             let master_key = manager::new();
-            fs::File::create(&secret).expect("Unable to create file.");
-            fs::File::create(&config).expect("Unable to create file.");
-            fs::write(&secret, master_key).expect("cannot write to file");
+            fs::File::create(&secret).expect(format!("{}", Red.paint("Unable to create file.")));
+            fs::File::create(&config).expect(format!("{}", Red.paint("Unable to create file.")));
+            fs::write(&secret, master_key);
         }
 
         _ => {
             if init == false {
-                panic!("You haven't made a init file yet. You can do that with  passman init ");
+                panic!(format!(
+                    "{}",
+                    Yellow.paint(
+                        "You haven't made a init file yet. You can do that with  passman init"
+                    )
+                ));
             }
             let master = manager::ask("Enter password");
-            if manager::authenticate(&master, &secret) == false {
-                println!("AUTH FAILED");
+            if auth::authenticate(&master, &secret) == false {
+                println!("{}", Red.paint("AUTH FAILED!!"));
                 std::process::exit(0);
             }
-            println!("AUTH PASSED!");
+            println!("{}", Green.paint("AUTH PASSED!!, Greetings Master"));
 
             database = serde_json::from_reader(
-                fs::File::open(&config).expect("Unable to open config file"),
+                fs::File::open(&config)
+                    .expect(format!("{}", Red.paint("Unable to open config file."))),
             )
             .unwrap_or(DB::new());
 
@@ -81,32 +90,36 @@ fn perform(query: &str) {
                     let item = database
                         .get(&name)
                         .or_else(|| {
-                            println!("No such entry");
+                            println!("{}", Red.paint("No such entry"));
                             std::process::exit(0);
                         })
                         .unwrap();
 
-                    let decrypted_pass = manager::get(&master, &item.hash);
-                    // println!("Your pass for {} is {}", name, decrypted_pass);
+                    let decrypted_pass = auth::decrypt_item(&master, &item.hash);
                     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-                    ctx.set_contents(decrypted_pass)
-                        .expect("Not able to copy to clipboard");
-                    println!("Password copied to clipbpoard for 30 seconds!");
+                    ctx.set_contents(decrypted_pass);
+                    println!(
+                        "{}",
+                        Green.paint("Password copied to clipbpoard for 30 seconds!")
+                    );
                     thread::sleep(Duration::from_secs(30));
-                    println!("Time's Up!");
+                    println!("{}", Red.paint("Time's Up!"));
                 }
 
                 "destroy" => {
                     fs::remove_file(&secret).expect("someone deleted the secret file already");
                     fs::remove_file(&config).expect("someone deleted the config file already");
-                    println!("Succesfully removed the config and password files.");
+                    println!(
+                        "{}",
+                        Green.paint("Succesfully removed the config and password files.")
+                    );
                 }
 
                 "add" => {
                     let name = manager::ask("Name for the entry");
                     let item = manager::create_new_item(&name, &master);
                     database.insert(name, item);
-                    println!("key entry suck cess");
+                    println!("{}", Green.paint("The entry was successfully registered"));
                     updatedb(&config, &database);
                 }
 
@@ -115,7 +128,7 @@ fn perform(query: &str) {
                     let present = database
                         .get(&name)
                         .or_else(|| {
-                            println!("No such entry");
+                            println!("{}", Red.paint("No such entry"));
                             std::process::exit(0);
                         })
                         .unwrap();
@@ -124,7 +137,7 @@ fn perform(query: &str) {
                     updatedb(&config, &database);
                 }
                 "list" => {
-                    println!("The list of stored keys are: ");
+                    println!("{}", Purple.paint("The list of stored keys are: "));
                     for (key, _) in database {
                         println!("- {}", key);
                     }
@@ -133,11 +146,14 @@ fn perform(query: &str) {
                 "del" => {
                     let name = manager::ask("Name of the entry");
                     let _ = database.get(&name).or_else(|| {
-                        println!("No such entry");
+                        println!("{}", Red.paint("No such entry"));
                         std::process::exit(0);
                     });
                     database.remove(&name);
-                    println!("Succesfully removed all the data about entry {}", name);
+                    println!(
+                        "Succesfully removed all the data about entry {}",
+                        Green.paint(name)
+                    );
                     updatedb(&config, &database);
                 }
 
@@ -146,7 +162,7 @@ fn perform(query: &str) {
                     let item = database
                         .get(&name)
                         .or_else(|| {
-                            println!("No such entry");
+                            println!("{}", Red.paint("No such entry"));
                             std::process::exit(0);
                         })
                         .unwrap();
@@ -157,12 +173,12 @@ fn perform(query: &str) {
                     let mut table = Table::new();
                     table.add_row(row!["name", "password"]);
                     for (name, item) in database {
-                        table.add_row(row![name, manager::get(&master, &item.hash)]);
+                        table.add_row(row![name, auth::decrypt_item(&master, &item.hash)]);
                     }
                     table.printstd();
                 }
                 _ => {
-                    println!("No such option");
+                    println!("{}", Red.paint("No such option"));
                     println!("{}", HELP);
                 }
             };
