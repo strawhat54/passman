@@ -37,8 +37,19 @@ pub fn paste_to_clipboard(value: String) {
 }
 
 pub fn pass_ask(query: &str) -> String {
-    let pass = rpassword::prompt_password_stdout(&format!("{}: ", Purple.paint(query))).unwrap();
-    pass
+    loop {
+        let pass =
+            rpassword::prompt_password_stdout(&format!("{}: ", Purple.paint(query))).unwrap();
+        let confirm =
+            rpassword::prompt_password_stdout(&format!("{}: ", Purple.paint("Please enter again")))
+                .unwrap();
+
+        if pass == confirm {
+            return pass;
+        } else {
+            println!("{}", Red.paint("Passwords do not match! Try again"))
+        }
+    }
 }
 
 pub fn ask(query: &str) -> String {
