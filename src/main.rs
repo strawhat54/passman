@@ -1,10 +1,3 @@
-#![allow(
-    unused_imports,
-    unused_must_use,
-    unused_assignments,
-    dead_code,
-    non_fmt_panic
-)]
 mod auth;
 mod manager;
 #[macro_use]
@@ -14,7 +7,7 @@ extern crate prettytable;
 use ansi_term::Color::{Green, Purple, Red, Yellow};
 use dirs::home_dir;
 use manager::Item;
-use prettytable::{Cell, Row, Table};
+use prettytable::{Table};
 use serde_json;
 use std::collections::HashMap;
 
@@ -80,7 +73,7 @@ fn perform(query: &str) {
             let master_key = manager::new();
             fs::File::create(&secret).expect(&format!("{}", Red.paint("Unable to create file.")));
             fs::File::create(&config).expect(&format!("{}", Red.paint("Unable to create file.")));
-            fs::write(&secret, master_key);
+            fs::write(&secret, master_key).expect("Not able to write to file");
         }
 
         _ => {
