@@ -15,6 +15,7 @@ argonautica = "0.2.0"
 magic-crypt = "3.1.8"
 prettytable-rs = "0.8.0"
 ansi_term = "0.12.1"
+rpassword = "5.0.1"
 
 [profile.dev]
 opt-level = 3
