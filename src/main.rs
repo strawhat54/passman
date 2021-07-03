@@ -7,7 +7,8 @@ extern crate prettytable;
 use ansi_term::Color::{Green, Purple, Red, Yellow};
 use dirs::home_dir;
 use manager::Item;
-use prettytable::{Table};
+use prettytable::Table;
+use rpassword;
 use serde_json;
 use std::collections::HashMap;
 
@@ -81,12 +82,16 @@ fn perform(query: &str) {
                 println!(
                     "{}",
                     Yellow.paint(
-                        "You haven't made a init file yet. You can do that with ` passman init `"
+                        "You haven't made a init file yet. You can do that with ` passman new `"
                     )
                 );
                 std::process::exit(0);
             }
-            let master = manager::pass_ask("Enter the master key");
+            let master = rpassword::prompt_password_stderr(&format!(
+                "{}",
+                Purple.paint("Enter the master key: "),
+            ))
+            .unwrap();
             if auth::authenticate(&master, &secret) == false {
                 println!("{}", Red.paint("AUTHENTICATION FAILED!!"));
                 std::process::exit(0);
