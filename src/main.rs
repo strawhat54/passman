@@ -1,4 +1,10 @@
-#![allow(unused_imports, unused_must_use, unused_assignments, dead_code)]
+#![allow(
+    unused_imports,
+    unused_must_use,
+    unused_assignments,
+    dead_code,
+    non_fmt_panic
+)]
 mod auth;
 mod manager;
 #[macro_use]
@@ -6,14 +12,12 @@ extern crate magic_crypt;
 #[macro_use]
 extern crate prettytable;
 use ansi_term::Color::{Green, Purple, Red, Yellow};
-use clipboard::{ClipboardContext, ClipboardProvider};
 use dirs::home_dir;
 use manager::Item;
 use prettytable::{Cell, Row, Table};
 use serde_json;
 use std::collections::HashMap;
-use std::thread;
-use std::time::Duration;
+
 use std::{env, fs};
 
 type DB = HashMap<String, Item>;
@@ -22,9 +26,21 @@ fn updatedb(config: &std::path::Path, database: &DB) {
     fs::File::open(&config).expect("Unable to open config file");
     let buffer = serde_json::to_string(&database).unwrap();
     fs::write(&config, &buffer).expect("something bad happend");
-    println!("Your entry was successfully added!");
 }
 
+fn checkpresent(database: &DB, key: &str, error_msg: &str) {
+    database
+        .get(key)
+        .or_else(|| {
+            println!("{}", Red.paint(error_msg));
+            std::process::exit(0);
+        })
+        .unwrap();
+}
+
+static COMMANDS: [&str; 10] = [
+    "help", "new", "get", "destroy", "add", "update", "del", "list", "show", "info",
+];
 static HELP: &str = r"
 USAGE: passman <option>
 
@@ -50,60 +66,53 @@ fn perform(query: &str) {
     let mut database: DB;
 
     let init = secret.is_file();
+    if COMMANDS.contains(&query) == false {
+        println!("{}", Red.paint("No such command. Consider this help menu"));
+        println!("{}", HELP);
+        std::process::exit(0);
+    }
     match query {
         "new" => {
             if init == true {
-                println!("{}",Red.paint("Looks like yout already have initialized passman. You can try other commands or run passman destroy to remove the current passwors and start from scratch"));
+                println!("{}",Red.paint("Looks like yout already have initialized passman. You can try other commands or run ` passman destroy ` to remove the current passwors and start from scratch"));
                 std::process::exit(0);
             }
             let master_key = manager::new();
-            fs::File::create(&secret).expect(format!("{}", Red.paint("Unable to create file.")));
-            fs::File::create(&config).expect(format!("{}", Red.paint("Unable to create file.")));
+            fs::File::create(&secret).expect(&format!("{}", Red.paint("Unable to create file.")));
+            fs::File::create(&config).expect(&format!("{}", Red.paint("Unable to create file.")));
             fs::write(&secret, master_key);
         }
 
         _ => {
             if init == false {
-                panic!(format!(
+                println!(
                     "{}",
                     Yellow.paint(
-                        "You haven't made a init file yet. You can do that with  passman init"
+                        "You haven't made a init file yet. You can do that with ` passman init `"
                     )
-                ));
-            }
-            let master = manager::ask("Enter password");
-            if auth::authenticate(&master, &secret) == false {
-                println!("{}", Red.paint("AUTH FAILED!!"));
+                );
                 std::process::exit(0);
             }
-            println!("{}", Green.paint("AUTH PASSED!!, Greetings Master"));
+            let master = manager::pass_ask("Enter the master key");
+            if auth::authenticate(&master, &secret) == false {
+                println!("{}", Red.paint("AUTHENTICATION FAILED!!"));
+                std::process::exit(0);
+            }
+            println!("{}", Green.paint("AUTHENTICATION SUCCESS"));
 
             database = serde_json::from_reader(
                 fs::File::open(&config)
-                    .expect(format!("{}", Red.paint("Unable to open config file."))),
+                    .expect(&format!("{}", Red.paint("Unable to open config file."))),
             )
             .unwrap_or(DB::new());
 
             match query {
                 "get" => {
                     let name = manager::ask("Name for the entry");
-                    let item = database
-                        .get(&name)
-                        .or_else(|| {
-                            println!("{}", Red.paint("No such entry"));
-                            std::process::exit(0);
-                        })
-                        .unwrap();
-
+                    checkpresent(&database, &name, "No such entry");
+                    let item = database.get(&name).unwrap();
                     let decrypted_pass = auth::decrypt_item(&master, &item.hash);
-                    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-                    ctx.set_contents(decrypted_pass);
-                    println!(
-                        "{}",
-                        Green.paint("Password copied to clipbpoard for 30 seconds!")
-                    );
-                    thread::sleep(Duration::from_secs(30));
-                    println!("{}", Red.paint("Time's Up!"));
+                    manager::paste_to_clipboard(decrypted_pass);
                 }
 
                 "destroy" => {
@@ -125,14 +134,9 @@ fn perform(query: &str) {
 
                 "update" => {
                     let name = manager::ask("Name of the entry");
-                    let present = database
-                        .get(&name)
-                        .or_else(|| {
-                            println!("{}", Red.paint("No such entry"));
-                            std::process::exit(0);
-                        })
-                        .unwrap();
-                    let updated_entry = manager::update(present, &master);
+                    checkpresent(&database, &name, "No such entry");
+                    let item = database.get(&name).unwrap();
+                    let updated_entry = manager::update(item, &master);
                     database.insert(name, updated_entry);
                     updatedb(&config, &database);
                 }
@@ -145,10 +149,7 @@ fn perform(query: &str) {
 
                 "del" => {
                     let name = manager::ask("Name of the entry");
-                    let _ = database.get(&name).or_else(|| {
-                        println!("{}", Red.paint("No such entry"));
-                        std::process::exit(0);
-                    });
+                    checkpresent(&database, &name, "No such entry");
                     database.remove(&name);
                     println!(
                         "Succesfully removed all the data about entry {}",
@@ -159,13 +160,8 @@ fn perform(query: &str) {
 
                 "info" => {
                     let name = manager::ask("Name of the entry");
-                    let item = database
-                        .get(&name)
-                        .or_else(|| {
-                            println!("{}", Red.paint("No such entry"));
-                            std::process::exit(0);
-                        })
-                        .unwrap();
+                    checkpresent(&database, &name, "No such entry");
+                    let item = database.get(&name).unwrap();
                     println!("{}", item);
                 }
 
@@ -177,10 +173,7 @@ fn perform(query: &str) {
                     }
                     table.printstd();
                 }
-                _ => {
-                    println!("{}", Red.paint("No such option"));
-                    println!("{}", HELP);
-                }
+                _ => {}
             };
         }
     };
