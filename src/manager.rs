@@ -1,16 +1,12 @@
-#![allow(unused_imports, unused_must_use, dead_code)]
-
-use super::auth::{decrypt_item, encrypt_item, encrypt_master};
+use super::auth::{encrypt_item, encrypt_master};
 use ansi_term::Color::{Green, Purple, Red, Yellow};
 use clipboard;
 use clipboard::{ClipboardContext, ClipboardProvider};
-use dirs;
 use rand;
 use rpassword;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::fs::{self, File};
-use std::io::{self, prelude::*, Read};
+use std::io::{self, prelude::*};
 use std::thread;
 use std::time::Duration;
 
@@ -30,7 +26,8 @@ impl std::fmt::Display for Item {
 }
 pub fn paste_to_clipboard(value: String) {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-    ctx.set_contents(value);
+    ctx.set_contents(value)
+        .expect("Not able to copy to clipboard");
     println!(
         "{}",
         Green.paint("Password copied to clipbpoard for 30 seconds!")
@@ -46,9 +43,9 @@ pub fn pass_ask(query: &str) -> String {
 
 pub fn ask(query: &str) -> String {
     print!("{}: ", Yellow.paint(query));
-    io::stdout().flush();
+    io::stdout().flush().unwrap();
     let mut answer = String::new();
-    io::stdin().read_line(&mut answer);
+    io::stdin().read_line(&mut answer).unwrap();
     answer.trim().to_string()
 }
 
