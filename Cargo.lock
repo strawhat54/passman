@@ -780,6 +780,7 @@ dependencies = [
  "magic-crypt",
  "prettytable-rs",
  "rand 0.8.4",
+ "rpassword",
  "serde",
  "serde_json",
 ]
@@ -1085,6 +1086,16 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
 dependencies = [
+ "winapi",
+]
+
+[[package]]
+name = "rpassword"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffc936cf8a7ea60c58f030fd36a612a48f440610214dc54bc36431f9ea0c3efb"
+dependencies = [
+ "libc",
  "winapi",
 ]
 
