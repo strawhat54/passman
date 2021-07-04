@@ -75,6 +75,7 @@ fn perform(query: &str) {
             fs::File::create(&secret).expect(&format!("{}", Red.paint("Unable to create file.")));
             fs::File::create(&config).expect(&format!("{}", Red.paint("Unable to create file.")));
             fs::write(&secret, master_key).expect("Not able to write to file");
+            println!("{}", Green.paint("Passman has been successfully initialized. Have a secure day :)"));
         }
 
         _ => {
