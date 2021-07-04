@@ -136,7 +136,9 @@ fn perform(query: &str) {
                     let item = database.get(&name).unwrap();
                     let updated_entry = manager::update(item, &master);
                     database.insert(name, updated_entry);
+                    println!("{}", Green.paint("The entry was successfully updated"));
                     updatedb(&config, &database);
+
                 }
                 "list" => {
                     println!("{}", Purple.paint("The list of stored keys are: "));
