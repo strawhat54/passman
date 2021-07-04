@@ -15,13 +15,18 @@ pub struct Item {
     pub name: String,
     pub desc: String,
     pub hash: String,
-    // created: cration time
-    // date: last update time
+    pub date: String,
 }
 
 impl std::fmt::Display for Item {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Name: {}\nDesc: {}", self.name, self.desc)
+        write!(
+            f,
+            "\nName: {}\n\
+            Desc: {}\n\
+            Last Modified: {}",
+            self.name, self.desc, self.date
+        )
     }
 }
 pub fn paste_to_clipboard(value: String) {
@@ -73,6 +78,7 @@ pub fn create_new_item(name: &str, master: &str) -> Item {
         name: name.to_string(),
         desc: desc,
         hash: hash,
+        date: chrono::offset::Local::now().date().to_string(),
     }
 }
 
@@ -84,6 +90,7 @@ pub fn update(item: &Item, master: &str) -> Item {
         name: name,
         desc: desc,
         hash: new_hash,
+        date: chrono::offset::Local::now().date().to_string(),
     }
 }
 
