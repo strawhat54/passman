@@ -16,16 +16,23 @@ pub struct Item {
     pub desc: String,
     pub hash: String,
     pub date: String,
+    pub modified: bool,
 }
 
 impl std::fmt::Display for Item {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let date_string = if self.modified == false {
+            "Created"
+        } else {
+            "Last modified on"
+        };
+
         write!(
             f,
             "\nName: {}\n\
             Desc: {}\n\
-            Last Modified: {}",
-            self.name, self.desc, self.date
+            {}: {}",
+            self.name, self.desc, date_string, self.date
         )
     }
 }
@@ -79,6 +86,7 @@ pub fn create_new_item(name: &str, master: &str) -> Item {
         desc: desc,
         hash: hash,
         date: chrono::offset::Local::now().date().to_string(),
+        modified: false,
     }
 }
 
@@ -91,6 +99,7 @@ pub fn update(item: &Item, master: &str) -> Item {
         desc: desc,
         hash: new_hash,
         date: chrono::offset::Local::now().date().to_string(),
+        modified: true,
     }
 }
 
