@@ -44,7 +44,7 @@ Currently available options are:
 help      display this help message and exit
 new       initalize passman with a new master key
 get       to copy the password of the given query to clipboard for 30 seconds
-destory   destroy the current passman config and hence delete all the data
+destroy   destroy the current passman config and hence delete all the data
 add       add a new entry to passman
 update    updates the password of a registered entry
 del       deletes a registered entry
