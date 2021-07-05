@@ -75,7 +75,10 @@ fn perform(query: &str) {
             fs::File::create(&secret).expect(&format!("{}", Red.paint("Unable to create file.")));
             fs::File::create(&config).expect(&format!("{}", Red.paint("Unable to create file.")));
             fs::write(&secret, master_key).expect("Not able to write to file");
-            println!("{}", Green.paint("Passman has been successfully initialized. Have a secure day :)"));
+            println!(
+                "{}",
+                Green.paint("Passman has been successfully initialized. Have a secure day :)")
+            );
         }
 
         _ => {
@@ -125,6 +128,15 @@ fn perform(query: &str) {
 
                 "add" => {
                     let name = manager::ask("Name for the entry");
+                    match database.get(&name) {
+                        Some(_) => {
+                            println!("{}", Red.paint("Key already registered in the databse. You can update thay using ` passman update `"));
+                            std::process::exit(0);
+                        }
+
+                        None => {}
+                    }
+
                     let item = manager::create_new_item(&name, &master);
                     database.insert(name, item);
                     println!("{}", Green.paint("The entry was successfully registered"));
@@ -139,7 +151,6 @@ fn perform(query: &str) {
                     database.insert(name, updated_entry);
                     println!("{}", Green.paint("The entry was successfully updated"));
                     updatedb(&config, &database);
-
                 }
                 "list" => {
                     println!("{}", Purple.paint("The list of stored keys are: "));
