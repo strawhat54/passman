@@ -2,7 +2,7 @@
 
 ### How to use?:
 
-USAGE: passman <option>
+USAGE:  passman option
 
 Currently available options are:
 --------------------------------
@@ -11,7 +11,7 @@ new&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&nbsp;&nbsp;&nbsp; initaliz
 
 get&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&nbsp;&nbsp;&nbsp;&nbsp; to copy the password of the given query to clipboard for 30 seconds
 
-destory&nbsp;&nbsp; -&nbsp;&nbsp;&nbsp;&nbsp; destroy the current passman config and hence delete all the data
+destroy&nbsp;&nbsp; -&nbsp;&nbsp;&nbsp;&nbsp; destroy the current passman config and hence delete all the data
 
 add&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&nbsp;&nbsp;&nbsp;&nbsp; add a new entry to passman
 
