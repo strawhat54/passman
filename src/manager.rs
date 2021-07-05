@@ -1,6 +1,5 @@
 use super::auth::{encrypt_item, encrypt_master};
 use ansi_term::Color::{Green, Purple, Red, Yellow};
-use clipboard;
 use clipboard::{ClipboardContext, ClipboardProvider};
 use rand;
 use rpassword;
@@ -79,7 +78,17 @@ pub fn new() -> String {
 
 pub fn create_new_item(name: &str, master: &str) -> Item {
     let desc = ask("Desc (Optional)");
-    let pass = pass_ask("Password");
+
+    let mut option = ask("Create a random password? [Y/n]").to_ascii_lowercase();
+    if option.is_empty() {
+        option = "y".to_string();
+    }
+    let pass = if option == "y" {
+        random()
+    } else {
+        pass_ask("Please enter the password")
+    };
+
     let hash = encrypt_item(master, &pass);
     Item {
         name: name.to_string(),
@@ -103,7 +112,7 @@ pub fn update(item: &Item, master: &str) -> Item {
     }
 }
 
-pub fn _random() -> String {
+pub fn random() -> String {
     (0..15)
         .map(|_| (0x20u8 + (rand::random::<f32>() * 96.0) as u8) as char)
         .collect()
