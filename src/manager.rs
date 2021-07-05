@@ -31,7 +31,7 @@ impl std::fmt::Display for Item {
             f,
             "\nName: {}\n\
             Desc: {}\n\
-            {}: {}",
+            {}: {} (yyyy-mm-dd)",
             self.name, self.desc, date_string, self.date
         )
     }
@@ -78,7 +78,7 @@ pub fn new() -> String {
 }
 
 pub fn create_new_item(name: &str, master: &str) -> Item {
-    let desc = ask("Desc");
+    let desc = ask("Desc (Optional)");
     let pass = pass_ask("Password");
     let hash = encrypt_item(master, &pass);
     Item {
