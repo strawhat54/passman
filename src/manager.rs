@@ -84,7 +84,13 @@ pub fn create_new_item(name: &str, master: &str) -> Item {
         option = "y".to_string();
     }
     let pass = if option == "y" {
-        random()
+        let length = ask("Enter the length (default: 15)");
+        let len = if length.is_empty() {
+            15
+        } else {
+            length.parse::<i32>().unwrap()
+        };
+        random(len)
     } else {
         pass_ask("Please enter the password")
     };
@@ -112,8 +118,8 @@ pub fn update(item: &Item, master: &str) -> Item {
     }
 }
 
-pub fn random() -> String {
-    (0..15)
+pub fn random(len: i32) -> String {
+    (0..len)
         .map(|_| (0x20u8 + (rand::random::<f32>() * 96.0) as u8) as char)
         .collect()
 }
